@@ -1,0 +1,110 @@
+'use client'
+
+import { Trophy, Medal, TrendingUp, TrendingDown, Minus, History } from 'lucide-react'
+import { TeamRanking } from '@/types'
+
+interface RankingItemProps {
+  team: TeamRanking & { originalRank?: number; delta?: number }
+  index: number
+  isYourTeam: boolean
+  ratingChange: number
+  showDelta?: boolean
+  lastYearRating?: number | null
+}
+
+export function RankingItem({
+  team,
+  index,
+  isYourTeam,
+  ratingChange,
+  showDelta = false,
+  lastYearRating
+}: RankingItemProps) {
+  const isTop8 = index < 8
+  const delta = team.delta ?? 0
+
+  return (
+    <div
+      className={`group relative px-5 py-4 flex items-center gap-4 transition-colors ${
+        index === 7 ? 'border-b-[3px] border-gold-500' : 'border-b border-gray-100'
+      } ${
+        isYourTeam
+          ? 'bg-gradient-to-r from-gold-500/10 to-bronze-500/10'
+          : isTop8
+          ? 'bg-green-600/5'
+          : ''
+      }`}
+    >
+      <div
+        className={`w-12 h-12 rounded-sm flex items-center justify-center text-base font-bold font-sans ${
+          isTop8
+            ? 'bg-gradient-to-br from-gold-500 to-gold-600 text-white shadow-lg'
+            : 'bg-gray-100 text-tan-400'
+        }`}
+      >
+        {index === 0 ? <Trophy size={24} /> : `${index + 1}`}
+      </div>
+
+      <div className="flex-1">
+        <div
+          className={`text-base font-semibold mb-1 font-body flex items-center gap-2 ${
+            isYourTeam ? 'text-gold-600' : 'text-brown-800'
+          }`}
+        >
+          {team.name}
+          {showDelta && delta !== 0 && (
+            <span
+              className={`inline-flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded ${
+                delta > 0
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+              }`}
+            >
+              {delta > 0 ? (
+                <TrendingUp size={12} />
+              ) : (
+                <TrendingDown size={12} />
+              )}
+              {Math.abs(delta)}
+            </span>
+          )}
+          {showDelta && delta === 0 && (
+            <span className="inline-flex items-center text-xs text-gray-400 px-1.5 py-0.5">
+              <Minus size={12} />
+            </span>
+          )}
+        </div>
+        <div className="text-sm text-tan-400 flex items-center gap-3 font-sans">
+          <span>{team.rating.toFixed(2)} ELO</span>
+          {ratingChange !== 0 && (
+            <span
+              className={`font-semibold ${
+                ratingChange > 0 ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {ratingChange > 0 ? '+' : ''}
+              {ratingChange.toFixed(2)}
+            </span>
+          )}
+          {showDelta && team.originalRank && (
+            <span className="text-xs text-gray-400">
+              (was #{team.originalRank})
+            </span>
+          )}
+        </div>
+      </div>
+
+      {isTop8 && <Medal size={24} className="text-gold-500" />}
+
+      {/* Last year's rating tooltip */}
+      {lastYearRating && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+          <div className="bg-brown-800 text-white text-xs px-3 py-2 rounded shadow-lg whitespace-nowrap flex items-center gap-2">
+            <History size={12} />
+            <span>2025 ELO: <strong>{lastYearRating.toFixed(2)}</strong></span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

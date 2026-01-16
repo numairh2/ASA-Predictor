@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Lora', Georgia, serif;
+}
+
+/* Custom scrollbar for rankings panel */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f5f5f0;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #daa520;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #b8860b;
+}
