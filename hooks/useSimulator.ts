@@ -5,7 +5,6 @@ import { INITIAL_TEAMS, LAST_YEAR_RATINGS } from '@/data/teams'
 import { COMPETITION_SCHEDULE } from '@/data/competitions'
 import {
   updateEloRatings,
-  predictPlacements,
   calculateAveragedRatings,
   calculateSequentialRatings
 } from '@/lib/elo'
@@ -28,7 +27,7 @@ export function useSimulator() {
   const [ratings, setRatings] = useState<Ratings>(getInitialRatings)
   const [competitionCounts, setCompetitionCounts] = useState<CompetitionCounts>({})
   const [competitionResults, setCompetitionResults] = useState<CompetitionResults>({})
-  const [currentCompetition, setCurrentCompetition] = useState(0)
+  const [simulatedCompetitions, setSimulatedCompetitions] = useState<Set<number>>(new Set())
   const [yourTeam, setYourTeam] = useState("UW Awaaz")
   const [showAnalysis, setShowAnalysis] = useState(false)
 
@@ -53,7 +52,7 @@ export function useSimulator() {
   const predictedRankings: TeamRankingWithDelta[] = useMemo(() => {
     const initialRatings = getInitialRatings()
 
-    // Use permutation-averaged ratings for predictions
+    // Use permutation-averaged ratings for predictions (per ASA spec)
     const averagedRatings = calculateAveragedRatings(
       initialRatings,
       COMPETITION_SCHEDULE,
@@ -89,6 +88,43 @@ export function useSimulator() {
 
   const isTop8 = yourTeamData ? yourTeamData.rank <= 8 : false
   const isPredictedTop8 = yourTeamPredicted ? yourTeamPredicted.rank <= 8 : false
+
+  const recalculateFromSimulated = useCallback(
+    (simulatedSet: Set<number>) => {
+      const initialRatings = getInitialRatings()
+      let currentRatings = { ...initialRatings }
+      let currentCounts: CompetitionCounts = {}
+
+      // Sort by date, then by ID for competitions on same date
+      const sortedCompIds = Array.from(simulatedSet).sort((a, b) => {
+        const compA = COMPETITION_SCHEDULE.find((c) => c.id === a)
+        const compB = COMPETITION_SCHEDULE.find((c) => c.id === b)
+        if (!compA || !compB) return a - b
+
+        // Compare dates first
+        const dateA = new Date(compA.date)
+        const dateB = new Date(compB.date)
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA.getTime() - dateB.getTime()
+        }
+        // Same date, sort by ID
+        return a - b
+      })
+
+      for (const compId of sortedCompIds) {
+        const comp = COMPETITION_SCHEDULE.find((c) => c.id === compId)
+        if (!comp) continue
+        const placements = competitionResults[compId]
+        if (placements && placements.length >= 4) {
+          const result = updateEloRatings(currentRatings, comp, placements, currentCounts)
+          currentRatings = result.ratings
+          currentCounts = result.counts
+        }
+      }
+      return { ratings: currentRatings, counts: currentCounts }
+    },
+    [competitionResults]
+  )
 
   const handlePlacementSelect = useCallback(
     (competitionId: number, position: number, teamName: string) => {
@@ -132,55 +168,75 @@ export function useSimulator() {
   const simulateCompetition = useCallback(
     (compId: number) => {
       const comp = COMPETITION_SCHEDULE.find((c) => c.id === compId)
-      if (!comp || !competitionResults[compId] || competitionResults[compId].length < 4) {
+      if (!comp) return
+
+      if (!competitionResults[compId] || competitionResults[compId].length < 4) {
         return
       }
 
-      const result = updateEloRatings(
-        ratings,
-        comp,
-        competitionResults[compId],
-        competitionCounts
-      )
+      const newSimulated = new Set(simulatedCompetitions)
+      newSimulated.add(compId)
+      setSimulatedCompetitions(newSimulated)
+
+      const result = recalculateFromSimulated(newSimulated)
       setRatings(result.ratings)
       setCompetitionCounts(result.counts)
-      setCurrentCompetition(compId)
     },
-    [ratings, competitionResults, competitionCounts]
+    [competitionResults, simulatedCompetitions, recalculateFromSimulated]
+  )
+
+  const unsimulateCompetition = useCallback(
+    (compId: number) => {
+      const newSimulated = new Set(simulatedCompetitions)
+      newSimulated.delete(compId)
+      setSimulatedCompetitions(newSimulated)
+
+      const result = recalculateFromSimulated(newSimulated)
+      setRatings(result.ratings)
+      setCompetitionCounts(result.counts)
+    },
+    [simulatedCompetitions, recalculateFromSimulated]
   )
 
   const simulateAll = useCallback(() => {
-    const initialRatings = getInitialRatings()
-    const result = calculateSequentialRatings(
-      initialRatings,
-      COMPETITION_SCHEDULE,
-      competitionResults
-    )
+    const allWithResults = new Set<number>()
+    COMPETITION_SCHEDULE.forEach((comp) => {
+      if (competitionResults[comp.id] && competitionResults[comp.id].length >= 4) {
+        allWithResults.add(comp.id)
+      }
+    })
+    setSimulatedCompetitions(allWithResults)
 
+    const result = recalculateFromSimulated(allWithResults)
     setRatings(result.ratings)
     setCompetitionCounts(result.counts)
-    setCurrentCompetition(COMPETITION_SCHEDULE[COMPETITION_SCHEDULE.length - 1].id)
-  }, [competitionResults])
+  }, [competitionResults, recalculateFromSimulated])
 
-  // Predict remaining competitions (auto-fill based on ELO)
+  // Auto-fill remaining competitions with random placements
   const predictRemaining = useCallback(() => {
     const newResults = { ...competitionResults }
 
     COMPETITION_SCHEDULE.forEach((comp) => {
-      // Only predict if no manual results (or less than 4)
+      // Only fill if no manual results (or less than 4)
       if (!newResults[comp.id] || newResults[comp.id].length < 4) {
-        newResults[comp.id] = predictPlacements(ratings, comp)
+        // Shuffle teams randomly using Fisher-Yates
+        const shuffled = [...comp.teams]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1))
+          ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
+        newResults[comp.id] = shuffled
       }
     })
 
     setCompetitionResults(newResults)
-  }, [ratings, competitionResults])
+  }, [competitionResults])
 
   const resetSimulation = useCallback(() => {
     setRatings(getInitialRatings())
     setCompetitionCounts({})
     setCompetitionResults({})
-    setCurrentCompetition(0)
+    setSimulatedCompetitions(new Set())
   }, [])
 
   const getRatingChange = useCallback(
@@ -203,7 +259,7 @@ export function useSimulator() {
     ratings,
     competitionResults,
     competitionCounts,
-    currentCompetition,
+    simulatedCompetitions,
     yourTeam,
     setYourTeam,
     showAnalysis,
@@ -218,6 +274,7 @@ export function useSimulator() {
     handlePlacementSelect,
     clearPlacement,
     simulateCompetition,
+    unsimulateCompetition,
     simulateAll,
     predictRemaining,
     resetSimulation,

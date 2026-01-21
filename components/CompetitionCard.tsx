@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronDown, ChevronUp, Play } from 'lucide-react'
+import { ChevronDown, ChevronUp, Play, RotateCcw } from 'lucide-react'
 import { Competition } from '@/types'
 
 interface CompetitionCardProps {
@@ -12,6 +12,7 @@ interface CompetitionCardProps {
   placements: string[]
   onToggle: () => void
   onSimulate: () => void
+  onUnsimulate: () => void
   onPlacementSelect: (position: number, teamName: string) => void
   onClearPlacement: (position: number) => void
 }
@@ -32,6 +33,7 @@ export function CompetitionCard({
   placements,
   onToggle,
   onSimulate,
+  onUnsimulate,
   onPlacementSelect,
   onClearPlacement,
 }: CompetitionCardProps) {
@@ -68,7 +70,18 @@ export function CompetitionCard({
         </div>
 
         <div className="flex gap-3 items-center">
-          {hasResults && (
+          {isSimulated ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onUnsimulate()
+              }}
+              className="bg-gradient-to-br from-red-600 to-red-700 border-none rounded-sm px-4 py-2 text-white text-xs font-semibold cursor-pointer font-sans tracking-wide uppercase shadow-md flex items-center gap-2"
+            >
+              <RotateCcw size={14} />
+              Reset
+            </button>
+          ) : hasResults ? (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -79,7 +92,7 @@ export function CompetitionCard({
               <Play size={14} />
               Simulate
             </button>
-          )}
+          ) : null}
           {isExpanded ? (
             <ChevronUp size={24} className="text-tan-400" />
           ) : (
@@ -90,6 +103,7 @@ export function CompetitionCard({
 
       {isExpanded && (
         <div className="px-5 pb-5 border-t border-tan-300">
+          {/* Placement Entry */}
           <div className="mt-4">
             <div className="text-xs font-semibold text-tan-400 mb-3 font-sans tracking-wide uppercase">
               Select Top 4 Placements

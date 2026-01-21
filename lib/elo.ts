@@ -1,20 +1,25 @@
 import { Competition, Ratings, CompetitionResults, CompetitionCounts, EloUpdateResult } from '@/types'
 
 const D = 400 // ELO sensitivity parameter
-const K_NEW = 20 // K factor for teams with 0-1 competitions
-const K_ESTABLISHED = 16 // K factor for teams with 2+ competitions
+const K_NEW = 20 // K factor for teams with 0-1 competitions (per ASA spec)
+const K_ESTABLISHED = 16 // K factor for teams with 2+ competitions (per ASA spec)
 
 export function calculateExpectedScore(ratingA: number, ratingB: number): number {
   return 1 / (1 + Math.pow(10, (ratingB - ratingA) / D))
 }
 
+/**
+ * Calculates expected score for a team against all other teams in a multi-team competition.
+ * E_A = sum of 1/(1+10^((R_i - R_A)/D)) for all opponents, divided by N(N-1)/2
+ */
 export function calculateExpectedScoreMultiTeam(
-  teamRating: number,
+  teamIndex: number,
   allRatings: number[]
 ): number {
+  const teamRating = allRatings[teamIndex]
   let sum = 0
   for (let i = 0; i < allRatings.length; i++) {
-    if (allRatings[i] !== teamRating) {
+    if (i !== teamIndex) {  // Skip by index, not by value
       sum += calculateExpectedScore(teamRating, allRatings[i])
     }
   }
@@ -22,6 +27,11 @@ export function calculateExpectedScoreMultiTeam(
   return sum / ((N * (N - 1)) / 2)
 }
 
+/**
+ * Calculates actual scores from placements.
+ * Approximates ASA's judge-score normalization using placement-based scoring.
+ * Satisfies ASA constraints: monotonically decreasing, last place = 0, sum to 1.
+ */
 export function calculateActualScores(
   rankings: string[],
   teamNames: string[]
@@ -34,7 +44,17 @@ export function calculateActualScores(
 
   for (let i = 0; i < N; i++) {
     const placement = rankings.indexOf(teamNames[i])
-    const delta = placement === -1 ? 0 : N - 1 - placement
+    let delta: number
+
+    if (placement === -1) {
+      // Non-placed teams get 0 (treat as last place)
+      delta = 0
+    } else {
+      // Linear scoring: 1st gets N-1, last gets 0
+      // Satisfies ASA constraints: monotonic, last=0, sums to 1
+      delta = N - 1 - placement
+    }
+
     deltas.push(delta)
     totalDelta += delta
   }
@@ -66,7 +86,7 @@ export function predictPlacements(
 
 /**
  * Get K factor for a team based on their competition count.
- * K=20 for teams with 0-1 competitions, K=16 for teams with 2+ competitions.
+ * K=20 for teams with 0-1 competitions, K=16 for teams with 2+ competitions (per ASA spec).
  */
 function getKFactor(competitionCount: number): number {
   return competitionCount <= 1 ? K_NEW : K_ESTABLISHED
@@ -74,7 +94,8 @@ function getKFactor(competitionCount: number): number {
 
 /**
  * Updates ELO ratings for all teams in a competition.
- * Uses variable K factor based on each team's competition history.
+ * Uses variable K factor based on each team's competition history (per ASA spec).
+ * R'_A = R_A + K(N-1)(S_A - E_A)
  */
 export function updateEloRatings(
   currentRatings: Ratings,
@@ -93,13 +114,11 @@ export function updateEloRatings(
   const teamRatings = competingTeams.map((team) => currentRatings[team] ?? 1500)
 
   const expectedScores: Record<string, number> = {}
-  competingTeams.forEach((team) => {
-    expectedScores[team] = calculateExpectedScoreMultiTeam(
-      currentRatings[team] ?? 1500,
-      teamRatings
-    )
+  competingTeams.forEach((team, index) => {
+    expectedScores[team] = calculateExpectedScoreMultiTeam(index, teamRatings)
   })
 
+  // Calculate actual scores using linear placement-based scoring
   const actualScores = calculateActualScores(placements, competingTeams)
 
   competingTeams.forEach((team) => {
@@ -107,6 +126,7 @@ export function updateEloRatings(
     const K = getKFactor(currentCount)
     const N = competingTeams.length
 
+    // ASA formula: R'_A = R_A + K(N-1)(S_A - E_A)
     const ratingChange = K * (N - 1) * (actualScores[team] - expectedScores[team])
     newRatings[team] = (currentRatings[team] ?? 1500) + ratingChange
 

@@ -10,7 +10,7 @@ import { QualificationAnalysis } from '@/components/QualificationAnalysis'
 export default function Home() {
   const {
     competitionResults,
-    currentCompetition,
+    simulatedCompetitions,
     yourTeam,
     setYourTeam,
     showAnalysis,
@@ -24,6 +24,7 @@ export default function Home() {
     handlePlacementSelect,
     clearPlacement,
     simulateCompetition,
+    unsimulateCompetition,
     simulateAll,
     predictRemaining,
     resetSimulation,
@@ -62,10 +63,11 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-6">
           <CompetitionList
             competitionResults={competitionResults}
-            currentCompetition={currentCompetition}
+            simulatedCompetitions={simulatedCompetitions}
             onPlacementSelect={handlePlacementSelect}
             onClearPlacement={clearPlacement}
             onSimulateCompetition={simulateCompetition}
+            onUnsimulateCompetition={unsimulateCompetition}
           />
 
           <div>

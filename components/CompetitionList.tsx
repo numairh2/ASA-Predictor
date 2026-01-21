@@ -7,18 +7,20 @@ import { CompetitionCard } from './CompetitionCard'
 
 interface CompetitionListProps {
   competitionResults: CompetitionResults
-  currentCompetition: number
+  simulatedCompetitions: Set<number>
   onPlacementSelect: (competitionId: number, position: number, teamName: string) => void
   onClearPlacement: (competitionId: number, position: number) => void
   onSimulateCompetition: (compId: number) => void
+  onUnsimulateCompetition: (compId: number) => void
 }
 
 export function CompetitionList({
   competitionResults,
-  currentCompetition,
+  simulatedCompetitions,
   onPlacementSelect,
   onClearPlacement,
   onSimulateCompetition,
+  onUnsimulateCompetition,
 }: CompetitionListProps) {
   const [expandedCompetition, setExpandedCompetition] = useState<number | null>(null)
 
@@ -33,7 +35,7 @@ export function CompetitionList({
           const isExpanded = expandedCompetition === comp.id
           const hasResults =
             competitionResults[comp.id] && competitionResults[comp.id].length >= 4
-          const isSimulated = currentCompetition >= comp.id
+          const isSimulated = simulatedCompetitions.has(comp.id)
 
           return (
             <CompetitionCard
@@ -48,6 +50,7 @@ export function CompetitionList({
                 setExpandedCompetition(isExpanded ? null : comp.id)
               }
               onSimulate={() => onSimulateCompetition(comp.id)}
+              onUnsimulate={() => onUnsimulateCompetition(comp.id)}
               onPlacementSelect={(position, teamName) =>
                 onPlacementSelect(comp.id, position, teamName)
               }
