@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronDown, ChevronUp, Play, RotateCcw } from 'lucide-react'
+import { ChevronDown, ChevronUp, Play, RotateCcw, Trash2 } from 'lucide-react'
 import { Competition } from '@/types'
 
 interface CompetitionCardProps {
@@ -9,10 +9,12 @@ interface CompetitionCardProps {
   isExpanded: boolean
   isSimulated: boolean
   hasResults: boolean
+  isCustom: boolean
   placements: string[]
   onToggle: () => void
   onSimulate: () => void
   onUnsimulate: () => void
+  onDelete: () => void
   onPlacementSelect: (position: number, teamName: string) => void
   onClearPlacement: (position: number) => void
 }
@@ -30,10 +32,12 @@ export function CompetitionCard({
   isExpanded,
   isSimulated,
   hasResults,
+  isCustom,
   placements,
   onToggle,
   onSimulate,
   onUnsimulate,
+  onDelete,
   onPlacementSelect,
   onClearPlacement,
 }: CompetitionCardProps) {
@@ -70,6 +74,17 @@ export function CompetitionCard({
         </div>
 
         <div className="flex gap-3 items-center">
+          {isCustom && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete()
+              }}
+              className="bg-gradient-to-br from-gray-500 to-gray-600 border-none rounded-sm px-3 py-2 text-white text-xs font-semibold cursor-pointer font-sans tracking-wide uppercase shadow-md flex items-center gap-2 hover:from-red-600 hover:to-red-700 transition-all"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
           {isSimulated ? (
             <button
               onClick={(e) => {

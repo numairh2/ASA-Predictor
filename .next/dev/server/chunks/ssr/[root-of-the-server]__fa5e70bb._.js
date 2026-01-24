@@ -723,12 +723,19 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f
 ;
 ;
 ;
+const STORAGE_KEY = 'asa-custom-competitions';
+const MAX_DEFAULT_ID = Math.max(...__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"].map((c)=>c.id));
 function getInitialRatings() {
     const initial = {};
     __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$teams$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["INITIAL_TEAMS"].forEach((team)=>{
         initial[team.name] = team.rating;
     });
     return initial;
+}
+function loadCustomCompetitions() {
+    if ("TURBOPACK compile-time truthy", 1) return [];
+    //TURBOPACK unreachable
+    ;
 }
 function useSimulator() {
     const [ratings, setRatings] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(getInitialRatings);
@@ -737,6 +744,60 @@ function useSimulator() {
     const [simulatedCompetitions, setSimulatedCompetitions] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(new Set());
     const [yourTeam, setYourTeam] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("UW Awaaz");
     const [showAnalysis, setShowAnalysis] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    // Dynamic competitions state (default + custom)
+    const [competitions, setCompetitions] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(()=>{
+        const custom = loadCustomCompetitions();
+        return [
+            ...__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"],
+            ...custom
+        ];
+    });
+    // Save custom competitions to localStorage when they change
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        const customComps = competitions.filter((c)=>c.id > MAX_DEFAULT_ID);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(customComps));
+    }, [
+        competitions
+    ]);
+    // Add a new competition
+    const addCompetition = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((name, date, teams)=>{
+        const newId = Math.max(...competitions.map((c)=>c.id), 0) + 1;
+        const newCompetition = {
+            id: newId,
+            name,
+            date,
+            teams
+        };
+        setCompetitions((prev)=>[
+                ...prev,
+                newCompetition
+            ]);
+    }, [
+        competitions
+    ]);
+    // Delete a custom competition (only custom ones can be deleted)
+    const deleteCompetition = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((compId)=>{
+        // Only allow deleting custom competitions
+        if (compId <= MAX_DEFAULT_ID) return;
+        setCompetitions((prev)=>prev.filter((c)=>c.id !== compId));
+        // Also clear any results for this competition
+        setCompetitionResults((prev)=>{
+            const newResults = {
+                ...prev
+            };
+            delete newResults[compId];
+            return newResults;
+        });
+        setSimulatedCompetitions((prev)=>{
+            const newSet = new Set(prev);
+            newSet.delete(compId);
+            return newSet;
+        });
+    }, []);
+    // Check if a competition is custom (can be deleted)
+    const isCustomCompetition = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((compId)=>{
+        return compId > MAX_DEFAULT_ID;
+    }, []);
     // Original rankings (before any simulations)
     const originalRankings = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
         const initialRatings = getInitialRatings();
@@ -764,7 +825,7 @@ function useSimulator() {
     const predictedRankings = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
         const initialRatings = getInitialRatings();
         // Use permutation-averaged ratings for predictions (per ASA spec)
-        const averagedRatings = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$lib$2f$elo$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["calculateAveragedRatings"])(initialRatings, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"], competitionResults);
+        const averagedRatings = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$lib$2f$elo$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["calculateAveragedRatings"])(initialRatings, competitions, competitionResults);
         // Calculate predicted rankings
         const predicted = Object.entries(averagedRatings).map(([name, rating])=>({
                 name,
@@ -783,7 +844,8 @@ function useSimulator() {
         return predicted;
     }, [
         competitionResults,
-        originalRankings
+        originalRankings,
+        competitions
     ]);
     const yourTeamData = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
         return rankings.find((t)=>t.name === yourTeam);
@@ -807,8 +869,8 @@ function useSimulator() {
         let currentCounts = {};
         // Sort by date, then by ID for competitions on same date
         const sortedCompIds = Array.from(simulatedSet).sort((a, b)=>{
-            const compA = __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"].find((c)=>c.id === a);
-            const compB = __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"].find((c)=>c.id === b);
+            const compA = competitions.find((c)=>c.id === a);
+            const compB = competitions.find((c)=>c.id === b);
             if (!compA || !compB) return a - b;
             // Compare dates first
             const dateA = new Date(compA.date);
@@ -820,7 +882,7 @@ function useSimulator() {
             return a - b;
         });
         for (const compId of sortedCompIds){
-            const comp = __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"].find((c)=>c.id === compId);
+            const comp = competitions.find((c)=>c.id === compId);
             if (!comp) continue;
             const placements = competitionResults[compId];
             if (placements && placements.length >= 4) {
@@ -834,7 +896,8 @@ function useSimulator() {
             counts: currentCounts
         };
     }, [
-        competitionResults
+        competitionResults,
+        competitions
     ]);
     const handlePlacementSelect = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((competitionId, position, teamName)=>{
         setCompetitionResults((prev)=>{
@@ -871,7 +934,7 @@ function useSimulator() {
         });
     }, []);
     const simulateCompetition = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((compId)=>{
-        const comp = __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"].find((c)=>c.id === compId);
+        const comp = competitions.find((c)=>c.id === compId);
         if (!comp) return;
         if (!competitionResults[compId] || competitionResults[compId].length < 4) {
             return;
@@ -885,7 +948,8 @@ function useSimulator() {
     }, [
         competitionResults,
         simulatedCompetitions,
-        recalculateFromSimulated
+        recalculateFromSimulated,
+        competitions
     ]);
     const unsimulateCompetition = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((compId)=>{
         const newSimulated = new Set(simulatedCompetitions);
@@ -900,7 +964,7 @@ function useSimulator() {
     ]);
     const simulateAll = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
         const allWithResults = new Set();
-        __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"].forEach((comp)=>{
+        competitions.forEach((comp)=>{
             if (competitionResults[comp.id] && competitionResults[comp.id].length >= 4) {
                 allWithResults.add(comp.id);
             }
@@ -911,14 +975,15 @@ function useSimulator() {
         setCompetitionCounts(result.counts);
     }, [
         competitionResults,
-        recalculateFromSimulated
+        recalculateFromSimulated,
+        competitions
     ]);
     // Auto-fill remaining competitions with random placements
     const predictRemaining = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
         const newResults = {
             ...competitionResults
         };
-        __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"].forEach((comp)=>{
+        competitions.forEach((comp)=>{
             // Only fill if no manual results (or less than 4)
             if (!newResults[comp.id] || newResults[comp.id].length < 4) {
                 // Shuffle teams randomly using Fisher-Yates
@@ -937,7 +1002,8 @@ function useSimulator() {
         });
         setCompetitionResults(newResults);
     }, [
-        competitionResults
+        competitionResults,
+        competitions
     ]);
     const resetSimulation = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
         setRatings(getInitialRatings());
@@ -957,6 +1023,7 @@ function useSimulator() {
     }, []);
     return {
         ratings,
+        competitions,
         competitionResults,
         competitionCounts,
         simulatedCompetitions,
@@ -971,6 +1038,9 @@ function useSimulator() {
         yourTeamPredicted,
         isTop8,
         isPredictedTop8,
+        addCompetition,
+        deleteCompetition,
+        isCustomCompetition,
         handlePlacementSelect,
         clearPlacement,
         simulateCompetition,
@@ -1240,6 +1310,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f
 var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__ = __turbopack_context__.i("[project]/Desktop/ASA Predictor/node_modules/lucide-react/dist/esm/icons/chevron-up.js [app-ssr] (ecmascript) <export default as ChevronUp>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$play$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Play$3e$__ = __turbopack_context__.i("[project]/Desktop/ASA Predictor/node_modules/lucide-react/dist/esm/icons/play.js [app-ssr] (ecmascript) <export default as Play>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$rotate$2d$ccw$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__RotateCcw$3e$__ = __turbopack_context__.i("[project]/Desktop/ASA Predictor/node_modules/lucide-react/dist/esm/icons/rotate-ccw.js [app-ssr] (ecmascript) <export default as RotateCcw>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2$3e$__ = __turbopack_context__.i("[project]/Desktop/ASA Predictor/node_modules/lucide-react/dist/esm/icons/trash-2.js [app-ssr] (ecmascript) <export default as Trash2>");
 'use client';
 ;
 ;
@@ -1249,7 +1320,7 @@ const PLACEMENT_COLORS = [
     'from-bronze-500 to-bronze-600',
     'from-tan-400 to-brown-700'
 ];
-function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResults, placements, onToggle, onSimulate, onUnsimulate, onPlacementSelect, onClearPlacement }) {
+function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResults, isCustom, placements, onToggle, onSimulate, onUnsimulate, onDelete, onPlacementSelect, onClearPlacement }) {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: `rounded-sm overflow-hidden transition-all ${isSimulated ? 'bg-gradient-to-br from-gold-500/10 to-bronze-500/10 border-2 border-gold-500 shadow-lg' : 'bg-white border-2 border-tan-300 shadow-sm'}`,
         children: [
@@ -1271,7 +1342,7 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                        lineNumber: 54,
+                                        lineNumber: 58,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -1279,13 +1350,13 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                         children: competition.name
                                     }, void 0, false, {
                                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                        lineNumber: 63,
+                                        lineNumber: 67,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                lineNumber: 53,
+                                lineNumber: 57,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1298,18 +1369,36 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                lineNumber: 67,
+                                lineNumber: 71,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                        lineNumber: 52,
+                        lineNumber: 56,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex gap-3 items-center",
                         children: [
+                            isCustom && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                onClick: (e)=>{
+                                    e.stopPropagation();
+                                    onDelete();
+                                },
+                                className: "bg-gradient-to-br from-gray-500 to-gray-600 border-none rounded-sm px-3 py-2 text-white text-xs font-semibold cursor-pointer font-sans tracking-wide uppercase shadow-md flex items-center gap-2 hover:from-red-600 hover:to-red-700 transition-all",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2$3e$__["Trash2"], {
+                                    size: 14
+                                }, void 0, false, {
+                                    fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
+                                    lineNumber: 85,
+                                    columnNumber: 15
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
+                                lineNumber: 78,
+                                columnNumber: 13
+                            }, this),
                             isSimulated ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                 onClick: (e)=>{
                                     e.stopPropagation();
@@ -1321,14 +1410,14 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                         size: 14
                                     }, void 0, false, {
                                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                        lineNumber: 81,
+                                        lineNumber: 96,
                                         columnNumber: 15
                                     }, this),
                                     "Reset"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                lineNumber: 74,
+                                lineNumber: 89,
                                 columnNumber: 13
                             }, this) : hasResults ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                 onClick: (e)=>{
@@ -1341,14 +1430,14 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                         size: 14
                                     }, void 0, false, {
                                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                        lineNumber: 92,
+                                        lineNumber: 107,
                                         columnNumber: 15
                                     }, this),
                                     "Simulate"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                lineNumber: 85,
+                                lineNumber: 100,
                                 columnNumber: 13
                             }, this) : null,
                             isExpanded ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
@@ -1356,26 +1445,26 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                 className: "text-tan-400"
                             }, void 0, false, {
                                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                lineNumber: 97,
+                                lineNumber: 112,
                                 columnNumber: 13
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
                                 size: 24,
                                 className: "text-tan-400"
                             }, void 0, false, {
                                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                lineNumber: 99,
+                                lineNumber: 114,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                        lineNumber: 72,
+                        lineNumber: 76,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                lineNumber: 48,
+                lineNumber: 52,
                 columnNumber: 7
             }, this),
             isExpanded && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1389,7 +1478,7 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                 children: "Select Top 4 Placements"
                             }, void 0, false, {
                                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                lineNumber: 108,
+                                lineNumber: 123,
                                 columnNumber: 13
                             }, this),
                             [
@@ -1405,7 +1494,7 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                             children: position + 1
                                         }, void 0, false, {
                                             fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                            lineNumber: 114,
+                                            lineNumber: 129,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -1424,7 +1513,7 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                                     children: "Select team..."
                                                 }, void 0, false, {
                                                     fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                                    lineNumber: 131,
+                                                    lineNumber: 146,
                                                     columnNumber: 19
                                                 }, this),
                                                 competition.teams.filter((team)=>!placements.includes(team) || placements[position] === team).map((team)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -1432,25 +1521,25 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                                         children: team
                                                     }, team, false, {
                                                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                                        lineNumber: 138,
+                                                        lineNumber: 153,
                                                         columnNumber: 23
                                                     }, this))
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                            lineNumber: 120,
+                                            lineNumber: 135,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, position, true, {
                                     fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                    lineNumber: 113,
+                                    lineNumber: 128,
                                     columnNumber: 15
                                 }, this))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                        lineNumber: 107,
+                        lineNumber: 122,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1461,7 +1550,7 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                 children: "Competing Teams"
                             }, void 0, false, {
                                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                lineNumber: 148,
+                                lineNumber: 163,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1471,30 +1560,30 @@ function CompetitionCard({ competition, index, isExpanded, isSimulated, hasResul
                                         children: team
                                     }, team, false, {
                                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                        lineNumber: 153,
+                                        lineNumber: 168,
                                         columnNumber: 17
                                     }, this))
                             }, void 0, false, {
                                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                                lineNumber: 151,
+                                lineNumber: 166,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                        lineNumber: 147,
+                        lineNumber: 162,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-                lineNumber: 105,
+                lineNumber: 120,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx",
-        lineNumber: 41,
+        lineNumber: 45,
         columnNumber: 5
     }, this);
 }
@@ -1508,14 +1597,12 @@ __turbopack_context__.s([
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Desktop/ASA Predictor/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Desktop/ASA Predictor/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Desktop/ASA Predictor/data/competitions.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$components$2f$CompetitionCard$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Desktop/ASA Predictor/components/CompetitionCard.tsx [app-ssr] (ecmascript)");
 'use client';
 ;
 ;
 ;
-;
-function CompetitionList({ competitionResults, simulatedCompetitions, onPlacementSelect, onClearPlacement, onSimulateCompetition, onUnsimulateCompetition }) {
+function CompetitionList({ competitions, competitionResults, simulatedCompetitions, onPlacementSelect, onClearPlacement, onSimulateCompetition, onUnsimulateCompetition, onDeleteCompetition, isCustomCompetition }) {
     const [expandedCompetition, setExpandedCompetition] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         children: [
@@ -1524,42 +1611,45 @@ function CompetitionList({ competitionResults, simulatedCompetitions, onPlacemen
                 children: "Competition Schedule"
             }, void 0, false, {
                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionList.tsx",
-                lineNumber: 29,
+                lineNumber: 34,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex flex-col gap-4",
-                children: __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$data$2f$competitions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["COMPETITION_SCHEDULE"].map((comp, idx)=>{
+                children: competitions.map((comp, idx)=>{
                     const isExpanded = expandedCompetition === comp.id;
                     const hasResults = competitionResults[comp.id] && competitionResults[comp.id].length >= 4;
                     const isSimulated = simulatedCompetitions.has(comp.id);
+                    const isCustom = isCustomCompetition(comp.id);
                     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$components$2f$CompetitionCard$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CompetitionCard"], {
                         competition: comp,
                         index: idx,
                         isExpanded: isExpanded,
                         isSimulated: isSimulated,
                         hasResults: hasResults,
+                        isCustom: isCustom,
                         placements: competitionResults[comp.id] || [],
                         onToggle: ()=>setExpandedCompetition(isExpanded ? null : comp.id),
                         onSimulate: ()=>onSimulateCompetition(comp.id),
                         onUnsimulate: ()=>onUnsimulateCompetition(comp.id),
+                        onDelete: ()=>onDeleteCompetition(comp.id),
                         onPlacementSelect: (position, teamName)=>onPlacementSelect(comp.id, position, teamName),
                         onClearPlacement: (position)=>onClearPlacement(comp.id, position)
                     }, comp.id, false, {
                         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionList.tsx",
-                        lineNumber: 41,
+                        lineNumber: 47,
                         columnNumber: 13
                     }, this);
                 })
             }, void 0, false, {
                 fileName: "[project]/Desktop/ASA Predictor/components/CompetitionList.tsx",
-                lineNumber: 33,
+                lineNumber: 38,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Desktop/ASA Predictor/components/CompetitionList.tsx",
-        lineNumber: 28,
+        lineNumber: 33,
         columnNumber: 5
     }, this);
 }
@@ -1766,12 +1856,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f
 'use client';
 ;
 ;
-function RankingsPanel({ rankings, predictedRankings, yourTeam, getRatingChange, getLastYearRating }) {
-    // Create a map of predicted data for easy lookup
-    const predictedMap = new Map(predictedRankings.map((p)=>[
-            p.name,
-            p
-        ]));
+function RankingsPanel({ predictedRankings, yourTeam, getLastYearRating }) {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -1779,50 +1864,44 @@ function RankingsPanel({ rankings, predictedRankings, yourTeam, getRatingChange,
                 children: "2026 Season Standings"
             }, void 0, false, {
                 fileName: "[project]/Desktop/ASA Predictor/components/RankingsPanel.tsx",
-                lineNumber: 29,
+                lineNumber: 19,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                 className: "text-sm text-tan-400 mb-4 -mt-4 font-body italic",
-                children: "All teams start at 1500 ELO. Predicted changes shown."
+                children: "Permutation-averaged ELO rankings (ASA-compliant)"
             }, void 0, false, {
                 fileName: "[project]/Desktop/ASA Predictor/components/RankingsPanel.tsx",
-                lineNumber: 32,
+                lineNumber: 22,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "bg-white border-2 border-tan-300 rounded-sm overflow-hidden shadow-md max-h-[800px] overflow-y-auto",
-                children: rankings.map((team, idx)=>{
-                    const predicted = predictedMap.get(team.name);
-                    // Calculate predicted rating change (predicted rating - current rating)
-                    const predictedChange = predicted ? predicted.rating - team.rating : 0;
+                children: predictedRankings.map((team, idx)=>{
+                    // Rating change from initial 1500
+                    const ratingChange = team.rating - 1500;
                     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$components$2f$RankingItem$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["RankingItem"], {
-                        team: {
-                            ...team,
-                            // Add predicted rank info for delta display
-                            originalRank: idx + 1,
-                            delta: predicted ? idx + 1 - predicted.rank : 0
-                        },
+                        team: team,
                         index: idx,
                         isYourTeam: team.name === yourTeam,
-                        ratingChange: predictedChange,
+                        ratingChange: ratingChange,
                         showDelta: true,
                         lastYearRating: getLastYearRating(team.name)
                     }, team.name, false, {
                         fileName: "[project]/Desktop/ASA Predictor/components/RankingsPanel.tsx",
-                        lineNumber: 43,
+                        lineNumber: 32,
                         columnNumber: 13
                     }, this);
                 })
             }, void 0, false, {
                 fileName: "[project]/Desktop/ASA Predictor/components/RankingsPanel.tsx",
-                lineNumber: 36,
+                lineNumber: 26,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Desktop/ASA Predictor/components/RankingsPanel.tsx",
-        lineNumber: 28,
+        lineNumber: 18,
         columnNumber: 5
     }, this);
 }
@@ -2048,7 +2127,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f
 ;
 ;
 function Home() {
-    const { competitionResults, simulatedCompetitions, yourTeam, setYourTeam, showAnalysis, setShowAnalysis, rankings, predictedRankings, yourTeamData, yourTeamPredicted, isTop8, isPredictedTop8, handlePlacementSelect, clearPlacement, simulateCompetition, unsimulateCompetition, simulateAll, predictRemaining, resetSimulation, getRatingChange, getLastYearRating } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$hooks$2f$useSimulator$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useSimulator"])();
+    const { competitions, competitionResults, simulatedCompetitions, yourTeam, setYourTeam, showAnalysis, setShowAnalysis, predictedRankings, yourTeamPredicted, isPredictedTop8, addCompetition, deleteCompetition, isCustomCompetition, handlePlacementSelect, clearPlacement, simulateCompetition, unsimulateCompetition, simulateAll, predictRemaining, resetSimulation, getLastYearRating } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$hooks$2f$useSimulator$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useSimulator"])();
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "min-h-screen bg-gradient-to-br from-cream-100 via-cream-200 to-cream-300 text-brown-800 font-body relative overflow-hidden",
         children: [
@@ -2061,7 +2140,7 @@ function Home() {
                 }
             }, void 0, false, {
                 fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-                lineNumber: 38,
+                lineNumber: 39,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2070,11 +2149,11 @@ function Home() {
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$components$2f$Header$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Header"], {
                         yourTeam: yourTeam,
                         setYourTeam: setYourTeam,
-                        yourTeamData: yourTeamPredicted ?? yourTeamData,
+                        yourTeamData: yourTeamPredicted,
                         isTop8: isPredictedTop8
                     }, void 0, false, {
                         fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-                        lineNumber: 48,
+                        lineNumber: 49,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$components$2f$ControlPanel$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ControlPanel"], {
@@ -2085,7 +2164,7 @@ function Home() {
                         onToggleAnalysis: ()=>setShowAnalysis(!showAnalysis)
                     }, void 0, false, {
                         fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-                        lineNumber: 55,
+                        lineNumber: 56,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2100,53 +2179,51 @@ function Home() {
                                 onUnsimulateCompetition: unsimulateCompetition
                             }, void 0, false, {
                                 fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-                                lineNumber: 64,
+                                lineNumber: 65,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$components$2f$RankingsPanel$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["RankingsPanel"], {
-                                        rankings: rankings,
                                         predictedRankings: predictedRankings,
                                         yourTeam: yourTeam,
-                                        getRatingChange: getRatingChange,
                                         getLastYearRating: getLastYearRating
                                     }, void 0, false, {
                                         fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-                                        lineNumber: 74,
+                                        lineNumber: 75,
                                         columnNumber: 13
                                     }, this),
                                     showAnalysis && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$ASA__Predictor$2f$components$2f$QualificationAnalysis$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QualificationAnalysis"], {
                                         yourTeam: yourTeam,
-                                        yourTeamData: yourTeamPredicted ?? yourTeamData,
+                                        yourTeamData: yourTeamPredicted,
                                         isTop8: isPredictedTop8
                                     }, void 0, false, {
                                         fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-                                        lineNumber: 83,
+                                        lineNumber: 82,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-                                lineNumber: 73,
+                                lineNumber: 74,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-                        lineNumber: 63,
+                        lineNumber: 64,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-                lineNumber: 47,
+                lineNumber: 48,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Desktop/ASA Predictor/app/page.tsx",
-        lineNumber: 36,
+        lineNumber: 37,
         columnNumber: 5
     }, this);
 }

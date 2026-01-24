@@ -4,23 +4,25 @@ import { useSimulator } from '@/hooks/useSimulator'
 import { Header } from '@/components/Header'
 import { ControlPanel } from '@/components/ControlPanel'
 import { CompetitionList } from '@/components/CompetitionList'
+import { AddCompetitionForm } from '@/components/AddCompetitionForm'
 import { RankingsPanel } from '@/components/RankingsPanel'
 import { QualificationAnalysis } from '@/components/QualificationAnalysis'
 
 export default function Home() {
   const {
+    competitions,
     competitionResults,
     simulatedCompetitions,
     yourTeam,
     setYourTeam,
     showAnalysis,
     setShowAnalysis,
-    rankings,
     predictedRankings,
-    yourTeamData,
     yourTeamPredicted,
-    isTop8,
     isPredictedTop8,
+    addCompetition,
+    deleteCompetition,
+    isCustomCompetition,
     handlePlacementSelect,
     clearPlacement,
     simulateCompetition,
@@ -28,7 +30,6 @@ export default function Home() {
     simulateAll,
     predictRemaining,
     resetSimulation,
-    getRatingChange,
     getLastYearRating,
   } = useSimulator()
 
@@ -48,7 +49,7 @@ export default function Home() {
         <Header
           yourTeam={yourTeam}
           setYourTeam={setYourTeam}
-          yourTeamData={yourTeamPredicted ?? yourTeamData}
+          yourTeamData={yourTeamPredicted}
           isTop8={isPredictedTop8}
         />
 
@@ -61,28 +62,32 @@ export default function Home() {
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-6">
-          <CompetitionList
-            competitionResults={competitionResults}
-            simulatedCompetitions={simulatedCompetitions}
-            onPlacementSelect={handlePlacementSelect}
-            onClearPlacement={clearPlacement}
-            onSimulateCompetition={simulateCompetition}
-            onUnsimulateCompetition={unsimulateCompetition}
-          />
+          <div className="flex flex-col gap-4">
+            <AddCompetitionForm onAdd={addCompetition} />
+            <CompetitionList
+              competitions={competitions}
+              competitionResults={competitionResults}
+              simulatedCompetitions={simulatedCompetitions}
+              onPlacementSelect={handlePlacementSelect}
+              onClearPlacement={clearPlacement}
+              onSimulateCompetition={simulateCompetition}
+              onUnsimulateCompetition={unsimulateCompetition}
+              onDeleteCompetition={deleteCompetition}
+              isCustomCompetition={isCustomCompetition}
+            />
+          </div>
 
           <div>
             <RankingsPanel
-              rankings={rankings}
               predictedRankings={predictedRankings}
               yourTeam={yourTeam}
-              getRatingChange={getRatingChange}
               getLastYearRating={getLastYearRating}
             />
 
             {showAnalysis && (
               <QualificationAnalysis
                 yourTeam={yourTeam}
-                yourTeamData={yourTeamPredicted ?? yourTeamData}
+                yourTeamData={yourTeamPredicted}
                 isTop8={isPredictedTop8}
               />
             )}

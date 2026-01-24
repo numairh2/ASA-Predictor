@@ -1,19 +1,21 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { INITIAL_TEAMS, LAST_YEAR_RATINGS } from '@/data/teams'
 import { COMPETITION_SCHEDULE } from '@/data/competitions'
 import {
   updateEloRatings,
   calculateAveragedRatings,
-  calculateSequentialRatings
 } from '@/lib/elo'
-import { CompetitionResults, Ratings, TeamRanking, CompetitionCounts } from '@/types'
+import { Competition, CompetitionResults, Ratings, TeamRanking, CompetitionCounts } from '@/types'
 
 export interface TeamRankingWithDelta extends TeamRanking {
   originalRank: number
   delta: number // positive = improved, negative = dropped
 }
+
+const STORAGE_KEY = 'asa-custom-competitions'
+const MAX_DEFAULT_ID = Math.max(...COMPETITION_SCHEDULE.map(c => c.id))
 
 function getInitialRatings(): Ratings {
   const initial: Ratings = {}
@@ -23,6 +25,19 @@ function getInitialRatings(): Ratings {
   return initial
 }
 
+function loadCustomCompetitions(): Competition[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      return JSON.parse(saved) as Competition[]
+    }
+  } catch (e) {
+    console.error('Failed to load custom competitions:', e)
+  }
+  return []
+}
+
 export function useSimulator() {
   const [ratings, setRatings] = useState<Ratings>(getInitialRatings)
   const [competitionCounts, setCompetitionCounts] = useState<CompetitionCounts>({})
@@ -30,6 +45,49 @@ export function useSimulator() {
   const [simulatedCompetitions, setSimulatedCompetitions] = useState<Set<number>>(new Set())
   const [yourTeam, setYourTeam] = useState("UW Awaaz")
   const [showAnalysis, setShowAnalysis] = useState(false)
+
+  // Dynamic competitions state (default + custom)
+  const [competitions, setCompetitions] = useState<Competition[]>(() => {
+    const custom = loadCustomCompetitions()
+    return [...COMPETITION_SCHEDULE, ...custom]
+  })
+
+  // Save custom competitions to localStorage when they change
+  useEffect(() => {
+    const customComps = competitions.filter(c => c.id > MAX_DEFAULT_ID)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(customComps))
+  }, [competitions])
+
+  // Add a new competition
+  const addCompetition = useCallback((name: string, date: string, teams: string[]) => {
+    const newId = Math.max(...competitions.map(c => c.id), 0) + 1
+    const newCompetition: Competition = { id: newId, name, date, teams }
+    setCompetitions(prev => [...prev, newCompetition])
+  }, [competitions])
+
+  // Delete a custom competition (only custom ones can be deleted)
+  const deleteCompetition = useCallback((compId: number) => {
+    // Only allow deleting custom competitions
+    if (compId <= MAX_DEFAULT_ID) return
+
+    setCompetitions(prev => prev.filter(c => c.id !== compId))
+    // Also clear any results for this competition
+    setCompetitionResults(prev => {
+      const newResults = { ...prev }
+      delete newResults[compId]
+      return newResults
+    })
+    setSimulatedCompetitions(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(compId)
+      return newSet
+    })
+  }, [])
+
+  // Check if a competition is custom (can be deleted)
+  const isCustomCompetition = useCallback((compId: number) => {
+    return compId > MAX_DEFAULT_ID
+  }, [])
 
   // Original rankings (before any simulations)
   const originalRankings: TeamRanking[] = useMemo(() => {
@@ -55,7 +113,7 @@ export function useSimulator() {
     // Use permutation-averaged ratings for predictions (per ASA spec)
     const averagedRatings = calculateAveragedRatings(
       initialRatings,
-      COMPETITION_SCHEDULE,
+      competitions,
       competitionResults
     )
 
@@ -76,7 +134,7 @@ export function useSimulator() {
       })
 
     return predicted
-  }, [competitionResults, originalRankings])
+  }, [competitionResults, originalRankings, competitions])
 
   const yourTeamData = useMemo(() => {
     return rankings.find((t) => t.name === yourTeam)
@@ -97,8 +155,8 @@ export function useSimulator() {
 
       // Sort by date, then by ID for competitions on same date
       const sortedCompIds = Array.from(simulatedSet).sort((a, b) => {
-        const compA = COMPETITION_SCHEDULE.find((c) => c.id === a)
-        const compB = COMPETITION_SCHEDULE.find((c) => c.id === b)
+        const compA = competitions.find((c) => c.id === a)
+        const compB = competitions.find((c) => c.id === b)
         if (!compA || !compB) return a - b
 
         // Compare dates first
@@ -112,7 +170,7 @@ export function useSimulator() {
       })
 
       for (const compId of sortedCompIds) {
-        const comp = COMPETITION_SCHEDULE.find((c) => c.id === compId)
+        const comp = competitions.find((c) => c.id === compId)
         if (!comp) continue
         const placements = competitionResults[compId]
         if (placements && placements.length >= 4) {
@@ -123,11 +181,25 @@ export function useSimulator() {
       }
       return { ratings: currentRatings, counts: currentCounts }
     },
-    [competitionResults]
+    [competitionResults, competitions]
   )
 
   const handlePlacementSelect = useCallback(
     (competitionId: number, position: number, teamName: string) => {
+      // Find competition name for tracking
+      const comp = competitions.find(c => c.id === competitionId)
+
+      // Track placement selection in GA
+      if (typeof window !== 'undefined' && window.gtag && comp) {
+        window.gtag('event', 'select_placement', {
+          competition_id: competitionId,
+          competition_name: comp.name,
+          position: position + 1,  // 1-indexed for readability
+          position_label: ['1st', '2nd', '3rd', '4th'][position],
+          team_name: teamName,
+        })
+      }
+
       setCompetitionResults((prev) => {
         const newResults = { ...prev }
         if (!newResults[competitionId]) {
@@ -147,7 +219,7 @@ export function useSimulator() {
         return newResults
       })
     },
-    []
+    [competitions]
   )
 
   const clearPlacement = useCallback(
@@ -167,7 +239,7 @@ export function useSimulator() {
 
   const simulateCompetition = useCallback(
     (compId: number) => {
-      const comp = COMPETITION_SCHEDULE.find((c) => c.id === compId)
+      const comp = competitions.find((c) => c.id === compId)
       if (!comp) return
 
       if (!competitionResults[compId] || competitionResults[compId].length < 4) {
@@ -182,7 +254,7 @@ export function useSimulator() {
       setRatings(result.ratings)
       setCompetitionCounts(result.counts)
     },
-    [competitionResults, simulatedCompetitions, recalculateFromSimulated]
+    [competitionResults, simulatedCompetitions, recalculateFromSimulated, competitions]
   )
 
   const unsimulateCompetition = useCallback(
@@ -200,7 +272,7 @@ export function useSimulator() {
 
   const simulateAll = useCallback(() => {
     const allWithResults = new Set<number>()
-    COMPETITION_SCHEDULE.forEach((comp) => {
+    competitions.forEach((comp) => {
       if (competitionResults[comp.id] && competitionResults[comp.id].length >= 4) {
         allWithResults.add(comp.id)
       }
@@ -210,13 +282,13 @@ export function useSimulator() {
     const result = recalculateFromSimulated(allWithResults)
     setRatings(result.ratings)
     setCompetitionCounts(result.counts)
-  }, [competitionResults, recalculateFromSimulated])
+  }, [competitionResults, recalculateFromSimulated, competitions])
 
   // Auto-fill remaining competitions with random placements
   const predictRemaining = useCallback(() => {
     const newResults = { ...competitionResults }
 
-    COMPETITION_SCHEDULE.forEach((comp) => {
+    competitions.forEach((comp) => {
       // Only fill if no manual results (or less than 4)
       if (!newResults[comp.id] || newResults[comp.id].length < 4) {
         // Shuffle teams randomly using Fisher-Yates
@@ -230,7 +302,7 @@ export function useSimulator() {
     })
 
     setCompetitionResults(newResults)
-  }, [competitionResults])
+  }, [competitionResults, competitions])
 
   const resetSimulation = useCallback(() => {
     setRatings(getInitialRatings())
@@ -257,6 +329,7 @@ export function useSimulator() {
 
   return {
     ratings,
+    competitions,
     competitionResults,
     competitionCounts,
     simulatedCompetitions,
@@ -271,6 +344,9 @@ export function useSimulator() {
     yourTeamPredicted,
     isTop8,
     isPredictedTop8,
+    addCompetition,
+    deleteCompetition,
+    isCustomCompetition,
     handlePlacementSelect,
     clearPlacement,
     simulateCompetition,

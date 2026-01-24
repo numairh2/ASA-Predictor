@@ -5790,3 +5790,86 @@ Import traces:
 [32:28:15.575] Browser ERROR   Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 6
 [32:28:16.541] Server  LOG     ✓ Compiled in 3ms
 [32:28:20.308] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[50:27:40.528] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[50:35:27.585] Server  LOG     ✓ Compiled in 515ms
+[50:35:31.883] Server  LOG     ✓ Compiled in 32ms
+[50:35:38.053] Server  LOG     ✓ Compiled in 26ms
+[50:35:43.043] Server  LOG     ✓ Compiled in 26ms
+[50:35:48.268] Server  LOG     ✓ Compiled in 25ms
+[52:48:06.328] Server  LOG     ✓ Compiled in 215ms
+[52:48:50.445] Server  LOG     ✓ Compiled in 75ms
+[52:49:11.485] Server  LOG     ✓ Compiled in 26ms
+[52:49:11.580] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'map')
+[52:49:31.218] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[52:49:31.250] Server  LOG     ✓ Compiled in 29ms
+[52:49:31.414] Server  ERROR   ⨯ TypeError: Cannot read properties of undefined (reading 'map')
+[52:49:31.421] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'map')
+[52:49:31.532] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[52:49:31.663] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'map')
+[52:49:46.624] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[52:49:46.686] Server  LOG     ✓ Compiled in 45ms
+[52:49:46.742] Server  ERROR   ⨯ TypeError: Cannot read properties of undefined (reading 'map')
+[52:49:46.916] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[52:49:47.040] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'map')
+[52:50:59.056] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[52:50:59.101] Server  LOG     ✓ Compiled in 101ms
+[52:50:59.135] Server  ERROR   ⨯ TypeError: Cannot read properties of undefined (reading 'map')
+[52:50:59.216] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[52:50:59.335] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'map')
+[52:51:10.529] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[52:51:10.566] Server  LOG     ✓ Compiled in 29ms
+[52:51:10.595] Server  ERROR   ⨯ TypeError: Cannot read properties of undefined (reading 'map')
+[52:51:10.676] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[52:51:10.798] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'map')
+[52:51:17.035] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[52:51:17.100] Server  ERROR   ⨯ TypeError: Cannot read properties of undefined (reading 'map')
+[52:51:17.104] Server  LOG     ✓ Compiled in 32ms
+[52:51:17.170] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[52:51:17.292] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'map')
+[52:51:22.482] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[52:51:22.566] Server  LOG     ✓ Compiled in 46ms
+[52:51:22.637] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[55:50:27.142] Server  LOG       Reload env: .env.local
+[55:50:37.698] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[55:50:38.458] Browser ERROR   uncaughtError: Error: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <RedirectBoundary>
+      <RedirectErrorBoundary router={{...}}>
+        <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:<Fragment>, ...}} segmentPath={[...]} ...>
+          <SegmentViewNode type="page" pagePath="/Desktop/A...">
+            <SegmentTrieNode>
+            <ClientPageRoot Component={function Home} serverProvidedParams={{...}}>
+              <Home params={Promise} searchParams={Promise}>
+                <div className="min-h-scre...">
+                  <div>
+                  <div className="max-w-7xl ...">
+                    <Header yourTeam="UW Awaaz" setYourTeam={function bound dispatchSetState} ...>
+                      <div className="bg-gradien...">
+                        <div>
+                        <p>
+                        <div className="flex gap-4...">
+                          <label>
+                          <select>
+                          <div className="flex gap-3...">
+                            <div className="flex items...">
+                              <Trophy>
++                             3
+-                             2
+                            ...
+                    ...
+          ...
+        ...
+
+[55:50:59.781] Server  LOG     ✓ Compiled in 10ms
+[56:14:57.109] Server  LOG       Reload env: .env.local

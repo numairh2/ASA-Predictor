@@ -1,26 +1,31 @@
 'use client'
 
 import { useState } from 'react'
-import { COMPETITION_SCHEDULE } from '@/data/competitions'
-import { CompetitionResults } from '@/types'
+import { Competition, CompetitionResults } from '@/types'
 import { CompetitionCard } from './CompetitionCard'
 
 interface CompetitionListProps {
+  competitions: Competition[]
   competitionResults: CompetitionResults
   simulatedCompetitions: Set<number>
   onPlacementSelect: (competitionId: number, position: number, teamName: string) => void
   onClearPlacement: (competitionId: number, position: number) => void
   onSimulateCompetition: (compId: number) => void
   onUnsimulateCompetition: (compId: number) => void
+  onDeleteCompetition: (compId: number) => void
+  isCustomCompetition: (compId: number) => boolean
 }
 
 export function CompetitionList({
+  competitions,
   competitionResults,
   simulatedCompetitions,
   onPlacementSelect,
   onClearPlacement,
   onSimulateCompetition,
   onUnsimulateCompetition,
+  onDeleteCompetition,
+  isCustomCompetition,
 }: CompetitionListProps) {
   const [expandedCompetition, setExpandedCompetition] = useState<number | null>(null)
 
@@ -31,11 +36,12 @@ export function CompetitionList({
       </h2>
 
       <div className="flex flex-col gap-4">
-        {COMPETITION_SCHEDULE.map((comp, idx) => {
+        {competitions.map((comp, idx) => {
           const isExpanded = expandedCompetition === comp.id
           const hasResults =
             competitionResults[comp.id] && competitionResults[comp.id].length >= 4
           const isSimulated = simulatedCompetitions.has(comp.id)
+          const isCustom = isCustomCompetition(comp.id)
 
           return (
             <CompetitionCard
@@ -45,12 +51,14 @@ export function CompetitionList({
               isExpanded={isExpanded}
               isSimulated={isSimulated}
               hasResults={hasResults}
+              isCustom={isCustom}
               placements={competitionResults[comp.id] || []}
               onToggle={() =>
                 setExpandedCompetition(isExpanded ? null : comp.id)
               }
               onSimulate={() => onSimulateCompetition(comp.id)}
               onUnsimulate={() => onUnsimulateCompetition(comp.id)}
+              onDelete={() => onDeleteCompetition(comp.id)}
               onPlacementSelect={(position, teamName) =>
                 onPlacementSelect(comp.id, position, teamName)
               }
