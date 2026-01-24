@@ -1,6 +1,6 @@
 import { Competition } from '@/types'
 
-export const COMPETITION_SCHEDULE: Competition[] = [
+export const COMPETITION_SCHEDULE_26: Competition[] = [
   {
     id: 1,
     name: "Steel City Sapana",

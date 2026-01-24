@@ -21,7 +21,12 @@ export function RankingsPanel({
         <h2 className="text-xl md:text-2xl font-bold text-brown-800 dark:text-slate-100 tracking-tight font-display">
           2026 Season Standings
         </h2>
-        <ExportMenu rankings={predictedRankings} exportElementId="rankings-export" />
+        <ExportMenu
+          rankings={predictedRankings}
+          predictedRankings={predictedRankings}
+          exportElementId="rankings-export"
+          getLastYearRating={getLastYearRating}
+        />
       </div>
       <p className="text-xs md:text-sm text-tan-400 dark:text-slate-400 mb-4 -mt-2 md:-mt-4 font-body italic">
         Permutation-averaged ELO rankings (ASA-compliant)

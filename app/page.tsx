@@ -15,6 +15,8 @@ export default function Home() {
     simulatedCompetitions,
     yourTeam,
     setYourTeam,
+    selectedYear,
+    setSelectedYear,
     predictedRankings,
     yourTeamPredicted,
     isPredictedTop8,
@@ -23,6 +25,7 @@ export default function Home() {
     isCustomCompetition,
     handlePlacementSelect,
     clearPlacement,
+    handleReorderPlacements,
     simulateCompetition,
     unsimulateCompetition,
     simulateAll,
@@ -55,6 +58,8 @@ export default function Home() {
           onSimulateAll={simulateAll}
           onPredictRemaining={predictRemaining}
           onReset={resetSimulation}
+          selectedYear={selectedYear}
+          onYearChange={setSelectedYear}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-6">
@@ -66,6 +71,7 @@ export default function Home() {
               simulatedCompetitions={simulatedCompetitions}
               onPlacementSelect={handlePlacementSelect}
               onClearPlacement={clearPlacement}
+              onReorderPlacements={handleReorderPlacements}
               onSimulateCompetition={simulateCompetition}
               onUnsimulateCompetition={unsimulateCompetition}
               onDeleteCompetition={deleteCompetition}

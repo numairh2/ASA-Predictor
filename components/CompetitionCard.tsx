@@ -1,7 +1,8 @@
 'use client'
 
-import { ChevronDown, ChevronUp, Play, RotateCcw, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Play, RotateCcw, Trash2, X } from 'lucide-react'
 import { Competition } from '@/types'
+import { PlacementDndContext, DraggableTeam, DroppablePlacement } from './dnd'
 
 interface CompetitionCardProps {
   competition: Competition
@@ -17,6 +18,7 @@ interface CompetitionCardProps {
   onDelete: () => void
   onPlacementSelect: (position: number, teamName: string) => void
   onClearPlacement: (position: number) => void
+  onReorderPlacements: (fromPosition: number, toPosition: number) => void
 }
 
 const PLACEMENT_COLORS = [
@@ -40,7 +42,31 @@ export function CompetitionCard({
   onDelete,
   onPlacementSelect,
   onClearPlacement,
+  onReorderPlacements,
 }: CompetitionCardProps) {
+  const handleDragEnd = (activeId: string, overId: string) => {
+    // Parse the drop target position from overId (format: "placement-{position}")
+    const toPositionMatch = overId.match(/^placement-(\d+)$/)
+    if (!toPositionMatch) return
+    const toPosition = parseInt(toPositionMatch[1], 10)
+
+    // Check if this is a reorder (from placed team) or new placement (from team list)
+    const placedMatch = activeId.match(/^placed-(\d+)-(.+)$/)
+    if (placedMatch) {
+      // Reordering a placed team
+      const fromPosition = parseInt(placedMatch[1], 10)
+      if (fromPosition !== toPosition) {
+        onReorderPlacements(fromPosition, toPosition)
+      }
+    } else {
+      // Dragging from team list
+      const teamName = activeId
+      if (competition.teams.includes(teamName) && !placements.includes(teamName)) {
+        onPlacementSelect(toPosition, teamName)
+      }
+    }
+  }
+
   return (
     <div
       className={`rounded-sm overflow-hidden transition-all ${
@@ -130,62 +156,70 @@ export function CompetitionCard({
 
       {isExpanded && (
         <div className="px-4 md:px-5 pb-4 md:pb-5 border-t border-tan-300 dark:border-slate-600">
-          {/* Placement Entry */}
-          <div className="mt-4">
-            <div className="text-xs font-semibold text-tan-400 dark:text-slate-400 mb-3 font-sans tracking-wide uppercase">
-              Select Top 4 Placements
-            </div>
-
-            {[0, 1, 2, 3].map((position) => (
-              <div key={position} className="mb-3 flex items-center gap-2 md:gap-3">
-                <div
-                  className={`w-9 h-9 md:w-10 md:h-10 rounded-sm bg-gradient-to-br ${PLACEMENT_COLORS[position]} flex items-center justify-center text-sm font-bold text-white font-sans shadow-md shrink-0`}
-                >
-                  {position + 1}
-                </div>
-
-                <select
-                  value={placements[position] || ''}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      onPlacementSelect(position, e.target.value)
-                    } else {
-                      onClearPlacement(position)
-                    }
-                  }}
-                  className="flex-1 bg-white dark:bg-slate-700 border-2 border-tan-300 dark:border-slate-600 rounded-sm px-3 py-2 text-brown-800 dark:text-slate-100 text-sm font-body cursor-pointer min-h-[44px]"
-                >
-                  <option value="">Select team...</option>
-                  {competition.teams
-                    .filter(
-                      (team) =>
-                        !placements.includes(team) || placements[position] === team
-                    )
-                    .map((team) => (
-                      <option key={team} value={team}>
-                        {team}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 md:mt-5 p-3 md:p-4 bg-gold-500/5 dark:bg-gold-500/10 border border-tan-300 dark:border-slate-600 rounded-sm">
-            <div className="text-xs font-semibold text-tan-400 dark:text-slate-400 mb-3 font-sans tracking-wide uppercase">
-              Competing Teams
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {competition.teams.map((team) => (
-                <span
-                  key={team}
-                  className="bg-white dark:bg-slate-700 border border-tan-300 dark:border-slate-600 px-2 md:px-3 py-1 rounded-sm text-xs font-body text-brown-800 dark:text-slate-100"
-                >
-                  {team}
+          <PlacementDndContext onDragEnd={handleDragEnd}>
+            {/* Placement Entry */}
+            <div className="mt-4">
+              <div className="text-xs font-semibold text-tan-400 dark:text-slate-400 mb-3 font-sans tracking-wide uppercase">
+                Select Top 4 Placements
+                <span className="ml-2 font-normal text-tan-300 dark:text-slate-500">
+                  (drag teams to slots)
                 </span>
+              </div>
+
+              {[0, 1, 2, 3].map((position) => (
+                <div key={position} className="mb-3 flex items-center gap-2 md:gap-3">
+                  <div
+                    className={`w-9 h-9 md:w-10 md:h-10 rounded-sm bg-gradient-to-br ${PLACEMENT_COLORS[position]} flex items-center justify-center text-sm font-bold text-white font-sans shadow-md shrink-0`}
+                  >
+                    {position + 1}
+                  </div>
+
+                  <DroppablePlacement position={position} currentTeam={placements[position]}>
+                    <div className="w-full bg-white dark:bg-slate-700 border-2 border-tan-300 dark:border-slate-600 rounded-sm px-3 py-2 min-h-[44px] flex items-center">
+                      {placements[position] ? (
+                        <>
+                          <span className="text-sm text-brown-800 dark:text-slate-100 font-body">
+                            {placements[position]}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onClearPlacement(position)
+                            }}
+                            className="ml-auto text-tan-400 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
+                          >
+                            <X size={16} />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-sm text-tan-400 dark:text-slate-500 font-body italic">
+                          Drop team here...
+                        </span>
+                      )}
+                    </div>
+                  </DroppablePlacement>
+                </div>
               ))}
             </div>
-          </div>
+
+            <div className="mt-4 md:mt-5 p-3 md:p-4 bg-gold-500/5 dark:bg-gold-500/10 border border-tan-300 dark:border-slate-600 rounded-sm">
+              <div className="text-xs font-semibold text-tan-400 dark:text-slate-400 mb-3 font-sans tracking-wide uppercase">
+                Competing Teams
+                <span className="ml-2 font-normal text-tan-300 dark:text-slate-500">
+                  (drag to placement slot)
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {competition.teams.map((team) => (
+                  <DraggableTeam
+                    key={team}
+                    teamName={team}
+                    isPlaced={placements.includes(team)}
+                  />
+                ))}
+              </div>
+            </div>
+          </PlacementDndContext>
         </div>
       )}
     </div>

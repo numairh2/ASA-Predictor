@@ -1,18 +1,21 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Download, Image, FileText, Copy, Check, Loader2 } from 'lucide-react'
+import { Download, Image, FileText, Copy, Check, Loader2, FileSpreadsheet } from 'lucide-react'
 import { TeamRanking } from '@/types'
-import { exportAsImage, exportAsPDF, copyToClipboard } from '@/lib/export'
+import { TeamRankingWithDelta } from '@/hooks/useSimulator'
+import { exportAsImage, exportAsPDF, copyToClipboard, exportToCSV } from '@/lib/export'
 
 interface ExportMenuProps {
   rankings: TeamRanking[]
+  predictedRankings: TeamRankingWithDelta[]
   exportElementId: string
+  getLastYearRating: (name: string) => number | null
 }
 
 type ExportStatus = 'idle' | 'loading' | 'success' | 'error'
 
-export function ExportMenu({ rankings, exportElementId }: ExportMenuProps) {
+export function ExportMenu({ rankings, predictedRankings, exportElementId, getLastYearRating }: ExportMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [status, setStatus] = useState<ExportStatus>('idle')
   const [statusMessage, setStatusMessage] = useState('')
@@ -29,7 +32,7 @@ export function ExportMenu({ rankings, exportElementId }: ExportMenuProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleExport = async (type: 'image' | 'pdf' | 'clipboard') => {
+  const handleExport = async (type: 'image' | 'pdf' | 'clipboard' | 'csv') => {
     setStatus('loading')
     setStatusMessage('')
 
@@ -46,6 +49,10 @@ export function ExportMenu({ rankings, exportElementId }: ExportMenuProps) {
         case 'clipboard':
           await copyToClipboard(rankings)
           setStatusMessage('Copied to clipboard!')
+          break
+        case 'csv':
+          exportToCSV(predictedRankings, getLastYearRating)
+          setStatusMessage('CSV downloaded!')
           break
       }
       setStatus('success')
@@ -114,6 +121,17 @@ export function ExportMenu({ rankings, exportElementId }: ExportMenuProps) {
                 <div className="text-left">
                   <div className="font-semibold">Save as PDF</div>
                   <div className="text-xs text-tan-400 dark:text-slate-400">Formatted document</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleExport('csv')}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-brown-800 dark:text-slate-100 hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors border-b border-tan-200 dark:border-slate-600"
+              >
+                <FileSpreadsheet size={18} className="text-green-600" />
+                <div className="text-left">
+                  <div className="font-semibold">Save as CSV</div>
+                  <div className="text-xs text-tan-400 dark:text-slate-400">Spreadsheet format</div>
                 </div>
               </button>
 

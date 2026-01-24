@@ -10,6 +10,7 @@ interface CompetitionListProps {
   simulatedCompetitions: Set<number>
   onPlacementSelect: (competitionId: number, position: number, teamName: string) => void
   onClearPlacement: (competitionId: number, position: number) => void
+  onReorderPlacements: (competitionId: number, fromPosition: number, toPosition: number) => void
   onSimulateCompetition: (compId: number) => void
   onUnsimulateCompetition: (compId: number) => void
   onDeleteCompetition: (compId: number) => void
@@ -22,6 +23,7 @@ export function CompetitionList({
   simulatedCompetitions,
   onPlacementSelect,
   onClearPlacement,
+  onReorderPlacements,
   onSimulateCompetition,
   onUnsimulateCompetition,
   onDeleteCompetition,
@@ -64,6 +66,9 @@ export function CompetitionList({
               }
               onClearPlacement={(position) =>
                 onClearPlacement(comp.id, position)
+              }
+              onReorderPlacements={(fromPosition, toPosition) =>
+                onReorderPlacements(comp.id, fromPosition, toPosition)
               }
             />
           )
