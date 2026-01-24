@@ -31,11 +31,11 @@ export function CompetitionList({
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-brown-800 tracking-tight border-b-[3px] border-gold-500 pb-3 font-display">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-brown-800 dark:text-slate-100 tracking-tight border-b-[3px] border-gold-500 dark:border-gold-400 pb-3 font-display">
         Competition Schedule
       </h2>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 md:gap-4">
         {competitions.map((comp, idx) => {
           const isExpanded = expandedCompetition === comp.id
           const hasResults =

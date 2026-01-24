@@ -15,8 +15,23 @@ export default function RootLayout({
   const gaId = process.env.NEXT_PUBLIC_GA_ID
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme');
+                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  if (theme === 'dark' || (!theme && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         {gaId && (
           <>
             <Script
@@ -34,7 +49,7 @@ export default function RootLayout({
           </>
         )}
       </head>
-      <body>{children}</body>
+      <body className="bg-cream-100 dark:bg-dark-900 transition-colors">{children}</body>
     </html>
   )
 }

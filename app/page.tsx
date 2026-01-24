@@ -7,6 +7,7 @@ import { CompetitionList } from '@/components/CompetitionList'
 import { AddCompetitionForm } from '@/components/AddCompetitionForm'
 import { RankingsPanel } from '@/components/RankingsPanel'
 import { QualificationAnalysis } from '@/components/QualificationAnalysis'
+import { Footer } from '@/components/Footer'
 
 export default function Home() {
   const {
@@ -34,7 +35,7 @@ export default function Home() {
   } = useSimulator()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-200 to-cream-300 text-brown-800 font-body relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-200 to-cream-300 dark:from-dark-900 dark:via-dark-800 dark:to-dark-900 text-brown-800 dark:text-slate-100 font-body relative overflow-hidden">
       {/* Background pattern */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
@@ -45,7 +46,7 @@ export default function Home() {
         }}
       />
 
-      <div className="max-w-7xl mx-auto px-6 py-10 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10 relative z-10">
         <Header
           yourTeam={yourTeam}
           setYourTeam={setYourTeam}
@@ -93,6 +94,8 @@ export default function Home() {
             )}
           </div>
         </div>
+
+        <Footer />
       </div>
     </div>
   )

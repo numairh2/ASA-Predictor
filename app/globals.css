@@ -8,7 +8,7 @@ body {
   font-family: 'Lora', Georgia, serif;
 }
 
-/* Custom scrollbar for rankings panel */
+/* Custom scrollbar for rankings panel - Light mode */
 .overflow-y-auto::-webkit-scrollbar {
   width: 8px;
 }
@@ -24,4 +24,26 @@ body {
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #b8860b;
+}
+
+/* Custom scrollbar - Dark mode */
+.dark .overflow-y-auto::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #f0c14b;
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #daa520;
+}
+
+/* Prevent flash of wrong theme */
+html {
+  background-color: #fef3e2;
+}
+
+html.dark {
+  background-color: #0f172a;
 }

@@ -18,19 +18,19 @@ export function ControlPanel({
   onToggleAnalysis,
 }: ControlPanelProps) {
   return (
-    <div className="bg-white border-2 border-tan-300 rounded-sm p-6 mb-8 shadow-md">
-      <div className="flex gap-4 flex-wrap">
+    <div className="bg-white dark:bg-slate-800 border-2 border-tan-300 dark:border-slate-600 rounded-sm p-4 md:p-6 mb-6 md:mb-8 shadow-md">
+      <div className="grid grid-cols-2 sm:flex gap-2 md:gap-4 flex-wrap">
         <button
           onClick={onPredictRemaining}
-          className="bg-gradient-to-br from-purple-600 to-purple-500 border-none rounded-sm px-6 py-3 text-white text-sm font-semibold cursor-pointer flex items-center gap-2 font-sans tracking-wide uppercase shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          className="bg-gradient-to-br from-purple-600 to-purple-500 border-none rounded-sm px-4 md:px-6 py-3 text-white text-xs md:text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 font-sans tracking-wide uppercase shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all min-h-[44px]"
         >
           <Sparkles size={18} />
-          Auto-Fill Predictions
+          <span className="hidden sm:inline">Auto-Fill</span> Predictions
         </button>
 
         <button
           onClick={onSimulateAll}
-          className="bg-gradient-to-br from-gold-600 to-gold-500 border-none rounded-sm px-6 py-3 text-white text-sm font-semibold cursor-pointer flex items-center gap-2 font-sans tracking-wide uppercase shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          className="bg-gradient-to-br from-gold-600 to-gold-500 border-none rounded-sm px-4 md:px-6 py-3 text-white text-xs md:text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 font-sans tracking-wide uppercase shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all min-h-[44px]"
         >
           <Play size={18} />
           Simulate All
@@ -38,7 +38,7 @@ export function ControlPanel({
 
         <button
           onClick={onReset}
-          className="bg-white border-2 border-red-600 rounded-sm px-6 py-3 text-red-600 text-sm font-semibold cursor-pointer flex items-center gap-2 font-sans tracking-wide uppercase hover:bg-red-600 hover:text-white transition-colors"
+          className="bg-white dark:bg-slate-700 border-2 border-red-600 rounded-sm px-4 md:px-6 py-3 text-red-600 dark:text-red-400 text-xs md:text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 font-sans tracking-wide uppercase hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white transition-colors min-h-[44px]"
         >
           <RotateCcw size={18} />
           Reset
@@ -46,10 +46,10 @@ export function ControlPanel({
 
         <button
           onClick={onToggleAnalysis}
-          className={`border-2 border-bronze-500 rounded-sm px-6 py-3 text-sm font-semibold cursor-pointer flex items-center gap-2 font-sans tracking-wide uppercase ml-auto transition-colors ${
+          className={`border-2 border-bronze-500 rounded-sm px-4 md:px-6 py-3 text-xs md:text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 font-sans tracking-wide uppercase sm:ml-auto transition-colors min-h-[44px] col-span-2 sm:col-span-1 ${
             showAnalysis
               ? 'bg-bronze-500 text-white'
-              : 'bg-white text-bronze-500 hover:bg-bronze-500 hover:text-white'
+              : 'bg-white dark:bg-slate-700 text-bronze-500 dark:text-bronze-500 hover:bg-bronze-500 hover:text-white'
           }`}
         >
           <Target size={18} />
