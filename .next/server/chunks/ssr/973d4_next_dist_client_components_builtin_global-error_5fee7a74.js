@@ -1,3 +1,0 @@
-module.exports=[7644,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(1323);a.n(d("[project]/Desktop/ASA Predictor/node_modules/next/dist/client/components/builtin/global-error.js <module evaluation>"))},56092,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(1323);a.n(d("[project]/Desktop/ASA Predictor/node_modules/next/dist/client/components/builtin/global-error.js"))},33828,a=>{"use strict";a.i(7644);var b=a.i(56092);a.n(b)}];
-
-//# sourceMappingURL=973d4_next_dist_client_components_builtin_global-error_5fee7a74.js.map
