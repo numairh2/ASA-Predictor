@@ -44,7 +44,6 @@ export function useSimulator() {
   const [competitionResults, setCompetitionResults] = useState<CompetitionResults>({})
   const [simulatedCompetitions, setSimulatedCompetitions] = useState<Set<number>>(new Set())
   const [yourTeam, setYourTeam] = useState("UW Awaaz")
-  const [showAnalysis, setShowAnalysis] = useState(false)
 
   // Dynamic competitions state (default + custom)
   const [competitions, setCompetitions] = useState<Competition[]>(() => {
@@ -211,10 +210,10 @@ export function useSimulator() {
           (t) => t !== teamName
         )
 
-        // Add to new position
+        // Add to new position, then truncate to max 4 items
         const updated = [...newResults[competitionId]]
         updated.splice(position, 0, teamName)
-        newResults[competitionId] = updated
+        newResults[competitionId] = updated.slice(0, 4)
 
         return newResults
       })
@@ -335,8 +334,6 @@ export function useSimulator() {
     simulatedCompetitions,
     yourTeam,
     setYourTeam,
-    showAnalysis,
-    setShowAnalysis,
     rankings,
     originalRankings,
     predictedRankings,

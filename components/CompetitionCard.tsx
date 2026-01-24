@@ -86,16 +86,28 @@ export function CompetitionCard({
             </button>
           )}
           {isSimulated ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onUnsimulate()
-              }}
-              className="bg-gradient-to-br from-red-600 to-red-700 border-none rounded-sm px-3 md:px-4 py-2 text-white text-xs font-semibold cursor-pointer font-sans tracking-wide uppercase shadow-md flex items-center gap-2 min-h-[44px]"
-            >
-              <RotateCcw size={14} />
-              <span className="hidden sm:inline">Reset</span>
-            </button>
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onSimulate()
+                }}
+                className="bg-gradient-to-br from-green-600 to-green-700 border-none rounded-sm px-3 md:px-4 py-2 text-white text-xs font-semibold cursor-pointer font-sans tracking-wide uppercase shadow-md flex items-center gap-2 min-h-[44px]"
+              >
+                <Play size={14} />
+                <span className="hidden sm:inline">Re-simulate</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onUnsimulate()
+                }}
+                className="bg-gradient-to-br from-red-600 to-red-700 border-none rounded-sm px-3 md:px-4 py-2 text-white text-xs font-semibold cursor-pointer font-sans tracking-wide uppercase shadow-md flex items-center gap-2 min-h-[44px]"
+              >
+                <RotateCcw size={14} />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+            </>
           ) : hasResults ? (
             <button
               onClick={(e) => {

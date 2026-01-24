@@ -6,7 +6,6 @@ import { ControlPanel } from '@/components/ControlPanel'
 import { CompetitionList } from '@/components/CompetitionList'
 import { AddCompetitionForm } from '@/components/AddCompetitionForm'
 import { RankingsPanel } from '@/components/RankingsPanel'
-import { QualificationAnalysis } from '@/components/QualificationAnalysis'
 import { Footer } from '@/components/Footer'
 
 export default function Home() {
@@ -16,8 +15,6 @@ export default function Home() {
     simulatedCompetitions,
     yourTeam,
     setYourTeam,
-    showAnalysis,
-    setShowAnalysis,
     predictedRankings,
     yourTeamPredicted,
     isPredictedTop8,
@@ -58,8 +55,6 @@ export default function Home() {
           onSimulateAll={simulateAll}
           onPredictRemaining={predictRemaining}
           onReset={resetSimulation}
-          showAnalysis={showAnalysis}
-          onToggleAnalysis={() => setShowAnalysis(!showAnalysis)}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-6">
@@ -85,13 +80,6 @@ export default function Home() {
               getLastYearRating={getLastYearRating}
             />
 
-            {showAnalysis && (
-              <QualificationAnalysis
-                yourTeam={yourTeam}
-                yourTeamData={yourTeamPredicted}
-                isTop8={isPredictedTop8}
-              />
-            )}
           </div>
         </div>
 

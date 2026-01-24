@@ -1,21 +1,17 @@
 'use client'
 
-import { Play, RotateCcw, Target, Sparkles } from 'lucide-react'
+import { Play, RotateCcw, Sparkles } from 'lucide-react'
 
 interface ControlPanelProps {
   onSimulateAll: () => void
   onPredictRemaining: () => void
   onReset: () => void
-  showAnalysis: boolean
-  onToggleAnalysis: () => void
 }
 
 export function ControlPanel({
   onSimulateAll,
   onPredictRemaining,
   onReset,
-  showAnalysis,
-  onToggleAnalysis,
 }: ControlPanelProps) {
   return (
     <div className="bg-white dark:bg-slate-800 border-2 border-tan-300 dark:border-slate-600 rounded-sm p-4 md:p-6 mb-6 md:mb-8 shadow-md">
@@ -44,17 +40,6 @@ export function ControlPanel({
           Reset
         </button>
 
-        <button
-          onClick={onToggleAnalysis}
-          className={`border-2 border-bronze-500 rounded-sm px-4 md:px-6 py-3 text-xs md:text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 font-sans tracking-wide uppercase sm:ml-auto transition-colors min-h-[44px] col-span-2 sm:col-span-1 ${
-            showAnalysis
-              ? 'bg-bronze-500 text-white'
-              : 'bg-white dark:bg-slate-700 text-bronze-500 dark:text-bronze-500 hover:bg-bronze-500 hover:text-white'
-          }`}
-        >
-          <Target size={18} />
-          {showAnalysis ? 'Hide' : 'Show'} Analysis
-        </button>
       </div>
     </div>
   )
