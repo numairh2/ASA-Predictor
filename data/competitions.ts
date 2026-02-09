@@ -45,14 +45,20 @@ export const COMPETITION_SCHEDULE_26: Competition[] = [
   },
   {
     id: 8,
-    name: "Mehfil",
-    date: "Mar 8, 2025",
-    teams: ["Dhunki A Cappella", "GT Taal Tadka","Ravaani", "Gator Awaaz", "Maize Mirchi", "UCSC Taza Tal"],
+    name: "Boston Bandish",
+    date: "Feb 21, 2026",
+    teams: ["Purde Taal", "UCLA Naya Zamaana", "Rutgers RAAG", "RPI Raaga", "Humraah at IU"]
   },
   {
     id: 9,
+    name: "Mehfil",
+    date: "Feb 28, 2025",
+    teams: ["Dhunki A Cappella", "GT Taal Tadka","Ravaani", "Gator Awaaz", "Maize Mirchi", "UCSC Taza Tal"],
+  },
+  {
+    id: 10,
     name: "Rang Raaga",
-    date: "Mar 1, 2025",
+    date: "Feb 28, 2025",
     teams: ["Sargam","JHU Kranti", "BU Suno", "Dil Se", "WashU Sur Taal Laya", "Emory Suri", "Swara", "Rutgers RAAG"]
   }
 ]
