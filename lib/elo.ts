@@ -224,13 +224,8 @@ export function calculateAveragedRatings(
         const result = updateEloRatings(currentRatings, comp, placements, currentCounts)
         currentRatings = result.ratings
         currentCounts = result.counts
-      } else {
-        // Auto-predict if no results
-        const predicted = predictPlacements(currentRatings, comp)
-        const result = updateEloRatings(currentRatings, comp, predicted, currentCounts)
-        currentRatings = result.ratings
-        currentCounts = result.counts
       }
+      // Skip competitions without results - don't auto-predict
     }
 
     // Add this permutation's final ratings to sums
