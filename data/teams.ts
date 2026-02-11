@@ -91,5 +91,7 @@ export const INITIAL_TEAMS: Team[] = [
   { name: "Gator Awaaz", rating: 1500 },
   { name: "GT Taal Tadka", rating: 1500 },
   { name: "Rice Basmati Beats", rating: 1500 },
-  { name: "Cornell Tarana", rating: 1500 }
+  { name: "Cornell Tarana", rating: 1500 },
+  { name: "UMiami Tufaan", rating: 1500 }
+
 ]
